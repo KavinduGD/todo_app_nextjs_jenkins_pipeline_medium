@@ -1,0 +1,11 @@
+name: todo_app
+
+services:
+  todo_app:
+    container_name: todo-app-container
+    image: kavinduorg/todo-app:1.0
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
