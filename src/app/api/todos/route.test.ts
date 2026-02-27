@@ -1,21 +1,9 @@
 import { GET, POST } from './route';
 import { NextRequest } from 'next/server';
+import { getTodos, addTodo } from '@/lib/store';
 
-// Deeply mock mongoose to block all internal instantiation attempts in tests
-jest.mock('mongoose', () => ({
-  Schema: class {},
-  model: jest.fn(),
-  models: { Todo: {} },
-  connect: jest.fn(),
-  Error: { ValidationError: class extends Error { errors: any; constructor(errs: any) { super(); this.errors = errs; } } }
-}));
-
-import dbConnect from '@/lib/db';
-import { Todo } from '@/models/Todo';
-
-// Mock the db connection and Todo model
-jest.mock('@/lib/db', () => jest.fn());
-jest.mock('@/models/Todo');
+// Mock the store functions
+jest.mock('@/lib/store');
 
 // Mock NextRequest to avoid global.Request node issues
 jest.mock('next/server', () => {
@@ -35,15 +23,6 @@ jest.mock('next/server', () => {
     }
   };
 });
-jest.mock('@/lib/db', () => jest.fn());
-jest.mock('@/models/Todo', () => ({
-  Todo: {
-    find: jest.fn(),
-    create: jest.fn(),
-    findByIdAndUpdate: jest.fn(),
-    findByIdAndDelete: jest.fn()
-  }
-}));
 
 describe('Todos API Route', () => {
   beforeEach(() => {
@@ -57,22 +36,21 @@ describe('Todos API Route', () => {
         { _id: '2', title: 'Test 2', completed: true }
       ];
 
-      // Mock the find().sort() chain
-      const mockSort = jest.fn().mockResolvedValue(mockTodos);
-      (Todo.find as jest.Mock).mockReturnValue({ sort: mockSort });
+      (getTodos as jest.Mock).mockReturnValue(mockTodos);
 
       const response = await GET();
       const data = await response.json();
 
-      expect(dbConnect).toHaveBeenCalled();
-      expect(Todo.find).toHaveBeenCalledWith({});
+      expect(getTodos).toHaveBeenCalled();
       expect(response.status).toBe(200);
       expect(data).toEqual({ success: true, data: mockTodos });
     });
 
     it('should handle errors', async () => {
-      // Mock db connection failure
-      (dbConnect as jest.Mock).mockRejectedValueOnce(new Error('DB Error'));
+      // Mock store throwing an error
+      (getTodos as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('Store Error');
+      });
 
       const response = await GET();
       const data = await response.json();
@@ -91,13 +69,12 @@ describe('Todos API Route', () => {
         body: JSON.stringify({ title: 'New Todo' })
       });
 
-      (Todo.create as jest.Mock).mockResolvedValue(mockTodo);
+      (addTodo as jest.Mock).mockReturnValue(mockTodo);
 
       const response = await POST(req);
       const data = await response.json();
 
-      expect(dbConnect).toHaveBeenCalled();
-      expect(Todo.create).toHaveBeenCalledWith({ title: 'New Todo' });
+      expect(addTodo).toHaveBeenCalledWith({ title: 'New Todo' });
       expect(response.status).toBe(201);
       expect(data).toEqual({ success: true, data: mockTodo });
     });
@@ -113,7 +90,7 @@ describe('Todos API Route', () => {
 
       expect(response.status).toBe(400);
       expect(data).toEqual({ success: false, error: 'Title is required' });
-      expect(Todo.create).not.toHaveBeenCalled();
+      expect(addTodo).not.toHaveBeenCalled();
     });
   });
 });

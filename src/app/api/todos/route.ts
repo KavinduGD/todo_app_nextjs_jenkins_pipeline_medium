@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
-import { Todo } from '@/models/Todo';
+import { getTodos, addTodo } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    await dbConnect();
-    const todos = await Todo.find({}).sort({ createdAt: -1 });
+    const todos = getTodos();
     return NextResponse.json({ success: true, data: todos }, { status: 200 });
   } catch (error) {
     console.error('Error fetching todos:', error);
@@ -17,14 +15,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    await dbConnect();
     const body = await req.json();
     
     if (!body.title) {
       return NextResponse.json({ success: false, error: 'Title is required' }, { status: 400 });
     }
 
-    const todo = await Todo.create(body);
+    const todo = addTodo(body);
     return NextResponse.json({ success: true, data: todo }, { status: 201 });
   } catch (error) {
     console.error('Error creating todo:', error);

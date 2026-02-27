@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
-import { Todo } from '@/models/Todo';
+import { updateTodo, deleteTodo } from '@/lib/store';
 
 // In Next.js App Router, params are resolved asynchronously.
 // While { params: { id: string } } works sometimes, treating it as a Promise is safer.
@@ -8,16 +7,12 @@ type Params = Promise<{ id: string }>;
 
 export async function PUT(req: NextRequest, segmentData: { params: Params }) {
   try {
-    await dbConnect();
     const params = await segmentData.params;
     const { id } = params;
     
     const body = await req.json();
 
-    const todo = await Todo.findByIdAndUpdate(id, body, {
-      new: true,
-      runValidators: true,
-    });
+    const todo = updateTodo(id, body);
 
     if (!todo) {
       return NextResponse.json({ success: false, error: 'Todo not found' }, { status: 404 });
@@ -32,11 +27,10 @@ export async function PUT(req: NextRequest, segmentData: { params: Params }) {
 
 export async function DELETE(req: NextRequest, segmentData: { params: Params }) {
   try {
-    await dbConnect();
     const params = await segmentData.params;
     const { id } = params;
 
-    const deletedTodo = await Todo.findByIdAndDelete(id);
+    const deletedTodo = deleteTodo(id);
 
     if (!deletedTodo) {
       return NextResponse.json({ success: false, error: 'Todo not found' }, { status: 404 });
