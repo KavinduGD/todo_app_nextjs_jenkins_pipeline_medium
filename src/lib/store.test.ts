@@ -1,4 +1,4 @@
-import { getTodos, addTodo, updateTodo, deleteTodo, cleanupExpiredTodos, clearStore } from './store';
+import { getTodos, getTodoById, addTodo, updateTodo, deleteTodo, cleanupExpiredTodos, clearStore } from './store';
 
 describe('In-Memory Store', () => {
   beforeEach(() => {
@@ -69,5 +69,23 @@ describe('In-Memory Store', () => {
     
     expect(todos).toHaveLength(1);
     expect(todos[0]._id).toBe(newTodo._id);
+  });
+  it('should get a todo by ID', () => {
+    const todo = addTodo({ title: 'To Get' });
+    const found = getTodoById(todo._id);
+    expect(found).toEqual(todo);
+
+    const notFound = getTodoById('non-existent');
+    expect(notFound).toBeUndefined();
+  });
+
+  it('should return null when updating a non-existent todo', () => {
+    const updated = updateTodo('non-existent', { title: 'Updated Title' });
+    expect(updated).toBeNull();
+  });
+
+  it('should return null when deleting a non-existent todo', () => {
+    const deleted = deleteTodo('non-existent');
+    expect(deleted).toBeNull();
   });
 });

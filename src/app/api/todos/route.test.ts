@@ -92,5 +92,22 @@ describe('Todos API Route', () => {
       expect(data).toEqual({ success: false, error: 'Title is required' });
       expect(addTodo).not.toHaveBeenCalled();
     });
+
+    it('should handle errors during creation', async () => {
+      const req = new NextRequest('http://localhost:3000/api/todos', {
+        method: 'POST',
+        body: JSON.stringify({ title: 'New Todo' })
+      });
+
+      (addTodo as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('Database error');
+      });
+
+      const response = await POST(req);
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data).toEqual({ success: false, error: 'Failed to create todo' });
+    });
   });
 });
