@@ -36,7 +36,7 @@ pipeline {
                     args '-u root' 
                 }
             }
-            st
+            
             steps {
                 sh '''
                     npm test
