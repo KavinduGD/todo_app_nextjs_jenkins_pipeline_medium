@@ -96,7 +96,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                curl --fail -X POST http://$DEPLOY_SERVER_IP:3456/todo-deploy \
+                curl --fail -X GET http://$DEPLOY_SERVER_IP:3456/todo-deploy \
                 ''' 
             }
         }
