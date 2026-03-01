@@ -119,4 +119,163 @@ describe('Home Component', () => {
       expect(screen.getByText('New task created')).toBeInTheDocument();
     });
   });
+
+  it('allows user to toggle a todo status', async () => {
+    const mockTodos = [
+      { _id: '1', title: 'Test Todo 1', completed: false },
+    ];
+
+    (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ success: true, data: mockTodos }),
+      })
+    );
+
+    await act(async () => {
+      render(<Home />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Todo 1')).toBeInTheDocument();
+    });
+
+    const checkbox = screen.getByRole('checkbox');
+    expect(checkbox).not.toBeChecked();
+
+    // Mock the PUT request
+    (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ success: true, data: { ...mockTodos[0], completed: true } }),
+      })
+    );
+
+    await act(async () => {
+      fireEvent.click(checkbox);
+    });
+
+    // Optimistic update should immediately check it
+    expect(checkbox).toBeChecked();
+  });
+
+  it('reverts toggle on API failure', async () => {
+    // Suppress console.error for this specific test
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const mockTodos = [
+      { _id: '1', title: 'Test Todo 1', completed: false },
+    ];
+
+    (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ success: true, data: mockTodos }),
+      })
+    );
+
+    await act(async () => {
+      render(<Home />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Todo 1')).toBeInTheDocument();
+    });
+
+    const checkbox = screen.getByRole('checkbox');
+
+    // Mock the PUT request to fail, and the subsequent GET fetchTodos to return original state
+    (global.fetch as jest.Mock)
+      .mockImplementationOnce(() => Promise.reject(new Error('Network Error'))) // PUT fails
+      .mockImplementationOnce(() => Promise.resolve({ // GET succeeds and returns original
+        json: () => Promise.resolve({ success: true, data: mockTodos }),
+      }));
+
+    await act(async () => {
+      fireEvent.click(checkbox);
+    });
+
+    // Checkbox should revert to unchecked because fetchTodos was called
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox')).not.toBeChecked();
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it('allows user to delete a todo', async () => {
+    const mockTodos = [
+      { _id: '1', title: 'Test Todo 1', completed: false },
+    ];
+
+    (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ success: true, data: mockTodos }),
+      })
+    );
+
+    await act(async () => {
+      render(<Home />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Todo 1')).toBeInTheDocument();
+    });
+
+    const deleteBtn = screen.getByRole('button', { name: /Delete task/i });
+
+    // Mock the DELETE request
+    (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ success: true, data: {} }),
+      })
+    );
+
+    await act(async () => {
+      fireEvent.click(deleteBtn);
+    });
+
+    // Optimistic update should immediately remove it
+    expect(screen.queryByText('Test Todo 1')).not.toBeInTheDocument();
+  });
+
+  it('reverts delete on API failure', async () => {
+    // Suppress console.error for this specific test
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const mockTodos = [
+      { _id: '1', title: 'Test Todo 1', completed: false },
+    ];
+
+    (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ success: true, data: mockTodos }),
+      })
+    );
+
+    await act(async () => {
+      render(<Home />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Todo 1')).toBeInTheDocument();
+    });
+
+    const deleteBtn = screen.getByRole('button', { name: /Delete task/i });
+
+    // Mock the DELETE request to fail, and the subsequent GET fetchTodos to return original state
+    (global.fetch as jest.Mock)
+      .mockImplementationOnce(() => Promise.reject(new Error('Network Error'))) // DELETE fails
+      .mockImplementationOnce(() => Promise.resolve({ // GET succeeds and returns original
+        json: () => Promise.resolve({ success: true, data: mockTodos }),
+      }));
+
+    await act(async () => {
+      fireEvent.click(deleteBtn);
+    });
+
+    // It should reappear because fetchTodos was called after failure
+    await waitFor(() => {
+      expect(screen.getByText('Test Todo 1')).toBeInTheDocument();
+    });
+
+    consoleSpy.mockRestore();
+  });
 });
