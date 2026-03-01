@@ -28,21 +28,22 @@ pipeline {
         //     }
         // }
 
-        // stage('Test') {
-        //     agent{
-        //         docker{
-        //             image 'node:22-alpine'
-        //             reuseNode true
-        //             args '-u root' 
-        //         }
-        //     }
+        stage('Test') {
+            agent{
+                docker{
+                    image 'node:22-alpine'
+                    reuseNode true
+                    args '-u root' 
+                }
+            }
             
-        //     steps {
-        //         sh '''
-        //             npm test
-        //         '''
-        //     }
-        // }
+            steps {
+                sh '''
+                    npm install
+                    npm test
+                '''
+            }
+        }
 
         stage('SonarQube Analysis') {
             steps {
