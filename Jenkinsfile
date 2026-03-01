@@ -12,21 +12,21 @@ pipeline {
 
     stages {
 
-        // stage('Build'){
-        //     agent{
-        //         docker{
-        //             image 'node:22-alpine'
-        //             reuseNode true
-        //             args '-u root' 
-        //         }
-        //     }
-        //     steps{
-        //         sh '''
-        //             npm install
-        //             npm run build
-        //         '''
-        //     }
-        // }
+        stage('Build'){
+            agent{
+                docker{
+                    image 'node:22-alpine'
+                    reuseNode true
+                    args '-u root' 
+                }
+            }
+            steps{
+                sh '''
+                    npm install
+                    npm run build
+                '''
+            }
+        }
 
         stage('Test') {
             agent{
@@ -39,7 +39,6 @@ pipeline {
             
             steps {
                 sh '''
-                    npm install
                     npm test
                 '''
             }
