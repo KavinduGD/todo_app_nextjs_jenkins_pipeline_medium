@@ -111,7 +111,7 @@ export default function Home() {
   return (
     <div className="container">
       <header className="header">
-        <h1>Task Master By Kavindu Gihan</h1>
+        <h1>Task Master By Kavindu Gihan Dharmasiri</h1>
         <p>Organize your work with elegance</p>
       </header>
 
