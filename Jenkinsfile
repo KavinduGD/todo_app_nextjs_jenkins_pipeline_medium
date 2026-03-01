@@ -4,7 +4,6 @@ pipeline {
     environment {
         DOCKER_USERNAME="kavinduorg"
         DOCKER_IMAGE = "todo"
-        IMAGE_TAG = "${BUILD_NUMBER}"
         DOCKERHUB_PASS=credentials('dockerhubtoken')
         DEPLOY_SERVER_IP = "13.205.140.129"
     }
@@ -68,7 +67,7 @@ pipeline {
          stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t $DOCKER_USERNAME/$DOCKER_IMAGE:$IMAGE_TAG .              
+                docker build -t $DOCKER_USERNAME/$DOCKER_IMAGE:latest .
                 '''
             }
         }
@@ -86,7 +85,7 @@ pipeline {
         stage('Push Image to Docker Hub') {
             steps {
                 sh '''
-                docker push $DOCKER_USERNAME/$DOCKER_IMAGE:$IMAGE_TAG
+                docker push $DOCKER_USERNAME/$DOCKER_IMAGE:latest
                 '''
             }
         }
@@ -108,7 +107,7 @@ pipeline {
         always {
              sh '''
             docker logout || true
-            docker rmi $DOCKER_USERNAME/$DOCKER_IMAGE:$IMAGE_TAG || true
+            docker rmi $DOCKER_USERNAME/$DOCKER_IMAGE:latest || true
             '''
         }
     }
